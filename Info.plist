@@ -6,19 +6,19 @@
 	<string>English</string>
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
+	<key>CFBundleGetInfoString</key>
+	<string>v002 Model Importer version 1.0 Beta 2, Copyright vade.</string>
 	<key>CFBundleIdentifier</key>
-	<string>info.v002.${PRODUCT_NAME:identifier}</string>
+	<string>info.v002.${PRODUCT_NAME:rfc1034identifier}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>${PRODUCT_NAME}</string>
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
-	<key>CFBundleGetInfoString</key>
-	<string>v002 Model Importer version 1.0 Beta 2, Copyright vade.</string>
-	<key>CFBundleVersion</key>
-	<string>1.0 Beta 2</string>
 	<key>CFBundleShortVersionString</key>
+	<string>1.0 Beta 2</string>
+	<key>CFBundleVersion</key>
 	<string>1.0 Beta 2</string>
 	<key>QCPlugInClasses</key>
 	<array>

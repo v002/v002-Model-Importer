@@ -16,6 +16,8 @@
 #define	kQCPlugIn_Name				@"v002 Model Importer"
 #define	kQCPlugIn_Description		@"v002 Model Importer supports a variety of plugin formats:\n\r Collada (.dae), 3ds Max 3DS (.3ds), 3ds Max ASE (.ase), Wavefront Object (.obj), Stanford Polygon Library (.ply), AutoCAD DXF (.dxf), LightWave (.lwo), Modo (.lxo), Stereolithography (.stl), AC3D (.ac), Milkshape 3D (.ms3d), TrueSpace (.cob, .scn), Valve Model (.smd,.vta), Quake I (.mdl), Quake II (.md2), Quake III (.md3), Return to Castle Wolfenstein (.mdc), Doom 3 (.md5), Biovision BVH (.bvh), CharacterStudio Motion (.csm), DirectX X (.x)., BlitzBasic 3D (.b3d)., Quick3D (.q3d,.q3s)., Ogre XML (.mesh, .xml)., Irrlicht Mesh (.irrmesh)., Irrlicht Scene (.irr)., Neutral File Format (.nff), Sense8 WorldToolKit (.nff), Object File Format (.off), PovRAY Raw (.raw), Terragen Terrain (.ter), 3D GameStudio (.mdl) and 3D GameStudio Terrain (.hmp)"
 
+#define kv002DescriptionAddOnText @"\n\rv002 Plugins : http://v002.info\n\nCopyright:\nvade - Anton Marini.\nbangnoise - Tom Butterworth\n\n2008-2012 - Creative Commons Non Commercial Share Alike Attribution 3.0"
+
 #define aisgl_min(x,y) (x<y?x:y)
 #define aisgl_max(x,y) (y>x?y:x)
 
@@ -85,7 +87,9 @@ static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
 
 + (NSDictionary*) attributes
 {	
-	return [NSDictionary dictionaryWithObjectsAndKeys:kQCPlugIn_Name, QCPlugInAttributeNameKey, kQCPlugIn_Description, QCPlugInAttributeDescriptionKey, nil];
+	return [NSDictionary dictionaryWithObjectsAndKeys:kQCPlugIn_Name, QCPlugInAttributeNameKey,
+            [kQCPlugIn_Description stringByAppendingString:kv002DescriptionAddOnText], QCPlugInAttributeDescriptionKey,
+            kQCPlugIn_Category, QCPlugInAttributeCategoriesKey, nil];
 }
 
 + (NSDictionary*) attributesForPropertyPortWithKey:(NSString*)key
