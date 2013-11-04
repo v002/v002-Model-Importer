@@ -12,9 +12,10 @@
 #include <vector>
 
 // assimp include files. These three are usually needed.
-#import "assimp.h"
-#import "aiPostProcess.h"
-#import "aiScene.h"
+//#import "assimp.h"
+#import "postprocess.h"
+#import "scene.h"
+#import "vector3.h"
 
 #import "v002ModelLoaderHelperClasses.h"
 
@@ -22,7 +23,7 @@
 @interface v002_Model_ImporterPlugIn : QCPlugIn
 {
     aiScene* v002Scene;
-    struct aiVector3D scene_min, scene_max, scene_center;
+	aiVector3D scene_min, scene_max, scene_center;
     double normalizedScale;    
     
     // Our array of textures.
@@ -73,18 +74,18 @@
 @property (assign) NSUInteger inputCullMode;
 @property (assign) BOOL inputNormalizeScale;
 @property (assign) BOOL inputAutoCenter;
-@property (assign) BOOL inputSilhouette;
-@property (assign) CGColorRef inputSilhouetteColor;
-@property (assign) double inputSilhouetteWidth;
-@property (assign) double inputSilhouetteOffset;
+//@property (assign) BOOL inputSilhouette;
+//@property (assign) CGColorRef inputSilhouetteColor;
+//@property (assign) double inputSilhouetteWidth;
+//@property (assign) double inputSilhouetteOffset;
 @property (assign) BOOL inputLoadTextures;
 
 @end
 
 
 @interface v002_Model_ImporterPlugIn (Execution)
-- (void) getBoundingBoxForNode:(const struct aiNode*)nd  minVector:(struct aiVector3D*) min maxVector:(struct aiVector3D*) max matrix:(struct aiMatrix4x4*) trafo;
-- (void) getBoundingBoxWithMinVector:(struct aiVector3D*) min maxVectr:(struct aiVector3D*) max;
+- (void) getBoundingBoxForNode:(const struct aiNode*)nd  minVector:(aiVector3D*) min maxVector:(aiVector3D*) max matrix:(aiMatrix4x4*) trafo;
+- (void) getBoundingBoxWithMinVector:(aiVector3D*) min maxVectr:(aiVector3D*) max;
 
 #pragma mark -
 #pragma mark Rendering Code

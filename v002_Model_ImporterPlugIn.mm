@@ -11,7 +11,8 @@
 
 #import "v002_Model_ImporterPlugIn.h"
 
-#import "aiConfig.h"
+#import "config.h"
+#import "cimport.h"
 
 #define	kQCPlugIn_Name				@"v002 Model Importer"
 #define	kQCPlugIn_Description		@"v002 Model Importer supports a variety of plugin formats:\n\r Collada (.dae), 3ds Max 3DS (.3ds), 3ds Max ASE (.ase), Wavefront Object (.obj), Stanford Polygon Library (.ply), AutoCAD DXF (.dxf), LightWave (.lwo), Modo (.lxo), Stereolithography (.stl), AC3D (.ac), Milkshape 3D (.ms3d), TrueSpace (.cob, .scn), Valve Model (.smd,.vta), Quake I (.mdl), Quake II (.md2), Quake III (.md3), Return to Castle Wolfenstein (.mdc), Doom 3 (.md5), Biovision BVH (.bvh), CharacterStudio Motion (.csm), DirectX X (.x)., BlitzBasic 3D (.b3d)., Quick3D (.q3d,.q3s)., Ogre XML (.mesh, .xml)., Irrlicht Mesh (.irrmesh)., Irrlicht Scene (.irr)., Neutral File Format (.nff), Sense8 WorldToolKit (.nff), Object File Format (.off), PovRAY Raw (.raw), Terragen Terrain (.ter), 3D GameStudio (.mdl) and 3D GameStudio Terrain (.hmp)"
@@ -34,7 +35,7 @@
 //TODO: 
 //Fix image paths so it can go up one level and find relative paths.
 
-static void color4_to_float4(const struct aiColor4D *c, float f[4])
+static void color4_to_float4(const aiColor4D *c, float f[4])
 {
 	f[0] = c->r;
 	f[1] = c->g;
@@ -51,7 +52,7 @@ static void set_float4(float f[4], float a, float b, float c, float d)
 }
 
 // Can't send color down as a pointer to aiColor4D because AI colors are ABGR.
-static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
+static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 {
 	glColor4f(color->r, color->g, color->b, color->a);
 }
@@ -79,10 +80,10 @@ static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
 @dynamic inputCullMode;
 @dynamic inputNormalizeScale;
 @dynamic inputAutoCenter;
-@dynamic inputSilhouette;
-@dynamic inputSilhouetteWidth;
-@dynamic inputSilhouetteOffset;
-@dynamic inputSilhouetteColor;
+//@dynamic inputSilhouette;
+//@dynamic inputSilhouetteWidth;
+//@dynamic inputSilhouetteOffset;
+//@dynamic inputSilhouetteColor;
 @dynamic inputLoadTextures;
 
 + (NSDictionary*) attributes
@@ -106,7 +107,14 @@ static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
 */
     if([key isEqualToString:@"inputImage"])
 		return [NSDictionary dictionaryWithObjectsAndKeys:@"Image", QCPortAttributeNameKey, nil];
-    
+
+	if([key isEqualToString:@"inputColor"])
+		return [NSDictionary dictionaryWithObjectsAndKeys:@"Tint Color", QCPortAttributeNameKey, nil];
+
+	if([key isEqualToString:@"inputOverrideColor"])
+		return [NSDictionary dictionaryWithObjectsAndKeys:@"Use Tint Color", QCPortAttributeNameKey, [NSNumber numberWithBool:FALSE], QCPortAttributeDefaultValueKey, nil];
+
+	
     if([key isEqualToString:@"inputAnimation"])
 		return [NSDictionary dictionaryWithObjectsAndKeys:@"Animation ID", QCPortAttributeNameKey,
                 [NSNumber numberWithUnsignedInt:0], QCPortAttributeDefaultValueKey,
@@ -312,7 +320,8 @@ static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
             // Load our new path.
             
             // only ever give us triangles.
-            aiSetImportPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT );
+			aiPropertyStore* store = aiCreatePropertyStore();
+            aiSetImportPropertyInteger(store, AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT );
             
             NSUInteger aiPostProccesFlags = 
             aiProcess_CalcTangentSpace          | // calculate tangents and bitangents if possible
@@ -369,6 +378,9 @@ static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
             {
                 [context logMessage:@"Could not load file %@", path];
             }
+			
+			aiReleasePropertyStore(store);
+			
         }
     }
             
@@ -516,55 +528,55 @@ static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
 		glColor4f(mcolor[0], mcolor[1], mcolor[2], mcolor[3]);
 		
         
-		if(self.inputSilhouette)
-		{
-			// Draw Filled Polygons
-			glEnable(GL_CULL_FACE);
-			glPolygonMode(GL_FRONT,GL_FILL);
-			// dont draw shared edges
-			glDepthFunc(GL_LESS);
-			// draw front facing polys only
-			glCullFace(GL_BACK);
-			// draw model
-			
-			
-			[self drawMeshesInContext:cgl_ctx enableMaterials:YES];
-			
-			// Draw Lines 
-			glPolygonMode(GL_BACK,GL_LINE);
-			// Draw shared edges 
-			glDepthFunc(GL_LEQUAL);
-			// Draw back facing edges only
-			glCullFace(GL_FRONT);  
-						
-			glLineWidth(self.inputSilhouetteWidth);
-						
-			//glDisable(GL_BLEND);
-			glEnable(GL_LINE_SMOOTH);
-			
-			
-			glEnable(GL_POLYGON_OFFSET_LINE);
-			glPolygonOffset(self.inputSilhouetteOffset, 1.0);
-
-			glDisable(GL_LIGHTING);
-						
-			if(image)
-				glBindTexture([image textureTarget], 0);
-			else
-				glBindTexture(GL_TEXTURE_2D, 0);
-					
-			const CGFloat *color;
-			
-			color = CGColorGetComponents(self.inputSilhouetteColor);
-			
-			glColor4f(color[0], color[1], color[2], color[3]);
-			
-			// Draw Model
-			[self drawMeshesInContext:cgl_ctx enableMaterials:self.inputOverrideColor];
-		}
-				
-		else
-			[self drawMeshesInContext:cgl_ctx enableMaterials:self.inputOverrideColor];
+//		if(self.inputSilhouette)
+//		{
+//			// Draw Filled Polygons
+//			glEnable(GL_CULL_FACE);
+//			glPolygonMode(GL_FRONT,GL_FILL);
+//			// dont draw shared edges
+//			glDepthFunc(GL_LESS);
+//			// draw front facing polys only
+//			glCullFace(GL_BACK);
+//			// draw model
+//			
+//			
+//			[self drawMeshesInContext:cgl_ctx enableMaterials:YES];
+//			
+//			// Draw Lines 
+//			glPolygonMode(GL_BACK,GL_LINE);
+//			// Draw shared edges 
+//			glDepthFunc(GL_LEQUAL);
+//			// Draw back facing edges only
+//			glCullFace(GL_FRONT);  
+//						
+//			glLineWidth(self.inputSilhouetteWidth);
+//						
+//			//glDisable(GL_BLEND);
+//			glEnable(GL_LINE_SMOOTH);
+//			
+//			
+//			glEnable(GL_POLYGON_OFFSET_LINE);
+//			glPolygonOffset(self.inputSilhouetteOffset, 1.0);
+//
+//			glDisable(GL_LIGHTING);
+//						
+//			if(image)
+//				glBindTexture([image textureTarget], 0);
+//			else
+//				glBindTexture(GL_TEXTURE_2D, 0);
+//					
+//			const CGFloat *color;
+//			
+//			color = CGColorGetComponents(self.inputSilhouetteColor);
+//			
+//			glColor4f(color[0], color[1], color[2], color[3]);
+//			
+//			// Draw Model
+//			[self drawMeshesInContext:cgl_ctx enableMaterials:self.inputOverrideColor];
+//		}
+//				
+//		else
+			[self drawMeshesInContext:cgl_ctx enableMaterials:!self.inputOverrideColor];
         
         if(image)
         {
@@ -696,10 +708,9 @@ static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
             if(textureImage)
             {
                 //NSLog(@"Have Texture Image");
-                NSBitmapImageRep* bitmap = [NSBitmapImageRep alloc];
                 
                 [textureImage lockFocus];
-                [bitmap initWithFocusedViewRect:NSMakeRect(0, 0, textureImage.size.width, textureImage.size.height)];
+                NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc] initWithFocusedViewRect:NSMakeRect(0, 0, textureImage.size.width, textureImage.size.height)];
                 [textureImage unlockFocus];
                                 
 				glPushAttrib(GL_ALL_ATTRIB_BITS);
@@ -756,9 +767,9 @@ static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
     [textureCopy release];
 }
 
-- (void) getBoundingBoxWithMinVector:(struct aiVector3D*) min maxVectr:(struct aiVector3D*) max
+- (void) getBoundingBoxWithMinVector:(aiVector3D*) min maxVectr:(aiVector3D*) max
 {
-	struct aiMatrix4x4 trafo;
+	aiMatrix4x4 trafo;
 	aiIdentityMatrix4(&trafo);
     
 	min->x = min->y = min->z =  1e10f;
@@ -767,9 +778,9 @@ static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
     [self getBoundingBoxForNode:v002Scene->mRootNode minVector:min maxVector:max matrix:&trafo];
 }
 
-- (void) getBoundingBoxForNode:(const struct aiNode*)nd  minVector:(struct aiVector3D*) min maxVector:(struct aiVector3D*) max matrix:(struct aiMatrix4x4*) trafo
+- (void) getBoundingBoxForNode:(const aiNode*)nd  minVector:(aiVector3D*) min maxVector:(aiVector3D*) max matrix:(aiMatrix4x4*) trafo
 {
-	struct aiMatrix4x4 prev;
+	aiMatrix4x4 prev;
 	unsigned int n = 0, t;
     
 	prev = *trafo;
@@ -780,7 +791,7 @@ static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
 		const struct aiMesh* mesh = v002Scene->mMeshes[nd->mMeshes[n]];
 		for (t = 0; t < mesh->mNumVertices; ++t)
         {
-        	struct aiVector3D tmp = mesh->mVertices[t];
+			aiVector3D tmp = mesh->mVertices[t];
 			aiTransformVecByMatrix4(&tmp,trafo);
             
 			min->x = aisgl_min(min->x,tmp.x);
@@ -1315,7 +1326,7 @@ static void Color4f(CGLContextObj cgl_ctx, const struct aiColor4D *color)
 		
 		glPushMatrix();
 		
-		struct aiMatrix4x4 m = helper.node->mTransformation;
+		aiMatrix4x4 m = helper.node->mTransformation;
 		aiTransposeMatrix4(&m);
 		glMultMatrixf((float*)&m);
 		
