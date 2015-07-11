@@ -41,7 +41,12 @@ struct Vertex
     // 52 bytes
     
     // padding for optimal vbo alignment
-    float padding[3];
+    // float = 4 bytes, this is thus + 3x4 = 12
+	float padding;
+	float padding1;
+	float padding2;
+	
+	// Total = 12+12+12+16+12
     
     // last Weight not used, calculated inside the vertex shader
     // Struct is optimal enough without these
