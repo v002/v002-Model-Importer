@@ -11,7 +11,7 @@
 		16BA96310A7EB9AC001E4983 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 16BA96300A7EB9AC001E4983 /* Quartz.framework */; };
 		1B43295F123FF2000040BE26 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B43295E123FF2000040BE26 /* OpenGL.framework */; };
 		1B451C7C12409FA20057206E /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B451C7B12409FA20057206E /* libz.dylib */; };
-		1B72ADC81827346F00F235E5 /* libassimp.3.0.1264.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B72ADC71827346F00F235E5 /* libassimp.3.0.1264.dylib */; };
+		1B6FF089193909750069AE34 /* libassimp.3.0.1264.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B72ADC71827346F00F235E5 /* libassimp.3.0.1264.dylib */; };
 		1B72ADC91827348200F235E5 /* libassimp.3.0.1264.dylib in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 1B72ADC71827346F00F235E5 /* libassimp.3.0.1264.dylib */; };
 		1BFA5E70124FAA2700C38A58 /* v002ModelLoaderHelperClasses.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1BFA5E6F124FAA2700C38A58 /* v002ModelLoaderHelperClasses.mm */; };
 		8D5B49B4048680CD000E48DA /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */; };
@@ -93,9 +93,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				1B43295F123FF2000040BE26 /* OpenGL.framework in Frameworks */,
-				1B72ADC81827346F00F235E5 /* libassimp.3.0.1264.dylib in Frameworks */,
 				8D5B49B4048680CD000E48DA /* Cocoa.framework in Frameworks */,
 				16BA96310A7EB9AC001E4983 /* Quartz.framework in Frameworks */,
+				1B6FF089193909750069AE34 /* libassimp.3.0.1264.dylib in Frameworks */,
 				1B451C7C12409FA20057206E /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -229,6 +229,7 @@
 				8D5B49B1048680CD000E48DA /* Sources */,
 				8D5B49B3048680CD000E48DA /* Frameworks */,
 				1B43930D123FE0300040BE26 /* Copy Frameworks */,
+				1B49BDA41B50DB330043EBA0 /* ShellScript */,
 				1B884FA015C0FE4C009AB948 /* ShellScript */,
 			);
 			buildRules = (
@@ -247,7 +248,7 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0430;
+				LastUpgradeCheck = 0510;
 			};
 			buildConfigurationList = 1DEB913E08733D840010E9CD /* Build configuration list for PBXProject "v002 Model Importer" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -269,6 +270,19 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		1B49BDA41B50DB330043EBA0 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "install_name_tool -change \"/Users/vade/Downloads/assimp--3.0.1270-source-only/lib/Release/libassimp.3.dylib\" @loader_path/../Frameworks/libassimp.3.0.1264.dylib \"$TARGET_BUILD_DIR/$PRODUCT_NAME.plugin/Contents/MacOS/$PRODUCT_NAME\"\n";
+		};
 		1B884FA015C0FE4C009AB948 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -309,7 +323,6 @@
 				GCC_AUTO_VECTORIZATION = YES;
 				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_OBJC_GC = supported;
 				GCC_ENABLE_SSE3_EXTENSIONS = YES;
 				GCC_ENABLE_SUPPLEMENTAL_SSE3_INSTRUCTIONS = YES;
 				GCC_MODEL_TUNING = G5;
@@ -325,6 +338,7 @@
 					"$(inherited)",
 					"$(SRCROOT)",
 					"/Users/vade/Documents/Repositories/v002/v002-Model-Importer",
+					"$(PROJECT_DIR)",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "v002 Model Importer";
@@ -342,7 +356,6 @@
 					"\"$(SRCROOT)\"",
 				);
 				GCC_AUTO_VECTORIZATION = YES;
-				GCC_ENABLE_OBJC_GC = supported;
 				GCC_ENABLE_SSE3_EXTENSIONS = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -356,6 +369,7 @@
 					"$(inherited)",
 					"$(SRCROOT)",
 					"/Users/vade/Documents/Repositories/v002/v002-Model-Importer",
+					"$(PROJECT_DIR)",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = "v002 Model Importer";
