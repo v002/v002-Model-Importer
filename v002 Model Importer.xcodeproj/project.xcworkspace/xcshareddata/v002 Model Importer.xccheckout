@@ -10,29 +10,29 @@
 	<string>v002 Model Importer</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>F432AE18-88B5-4412-9985-3703B978904A</key>
+		<key>0A2A86516084807F7E40CDC8DE870B6A87FEAAFD</key>
 		<string>https://github.com/v002/v002-Model-Importer.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>v002 Model Importer.xcodeproj/project.xcworkspace</string>
+	<string>v002 Model Importer.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>F432AE18-88B5-4412-9985-3703B978904A</key>
+		<key>0A2A86516084807F7E40CDC8DE870B6A87FEAAFD</key>
 		<string>../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
 	<string>https://github.com/v002/v002-Model-Importer.git</string>
 	<key>IDESourceControlProjectVersion</key>
-	<integer>110</integer>
+	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>F432AE18-88B5-4412-9985-3703B978904A</string>
+	<string>0A2A86516084807F7E40CDC8DE870B6A87FEAAFD</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>F432AE18-88B5-4412-9985-3703B978904A</string>
+			<string>0A2A86516084807F7E40CDC8DE870B6A87FEAAFD</string>
 			<key>IDESourceControlWCCName</key>
 			<string>v002-Model-Importer</string>
 		</dict>

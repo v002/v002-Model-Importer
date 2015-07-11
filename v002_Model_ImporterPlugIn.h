@@ -29,6 +29,9 @@
     // Our array of textures.
     GLuint *textureIds;
     
+    // our 1px x 1px color texure we use as a tint color
+    GLuint colorTextureID;
+    
     // only used if we use
     NSMutableArray* modelMeshes;   
     BOOL builtBuffers;

@@ -309,7 +309,39 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 
 - (BOOL) startExecution:(id<QCPlugInContext>)context
 {
+    CGLContextObj cgl_ctx = [context CGLContextObj];
+
+    // create our 1 x 1 GL_TEXTURE_2D color texture, and set its color to our
+    if(!colorTextureID)
+    {
+        glPushAttrib(GL_TEXTURE_BIT);
+        
+        glGenTextures(1, &colorTextureID);
+        glEnable(GL_TEXTURE_2D);
+    
+        glBindTexture(GL_TEXTURE_2D, colorTextureID);
+        
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, 1, 1, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        
+        glPopAttrib();
+    }
+    
    	return YES;
+}
+
+- (void) stopExecution:(id<QCPlugInContext>)context
+{
+    CGLContextObj cgl_ctx = [context CGLContextObj];
+
+    // delete our color texture
+    if(colorTextureID)
+    {
+        glDeleteTextures(1, &colorTextureID);
+        colorTextureID = 0;
+    }
 }
 
 - (void) enableExecution:(id<QCPlugInContext>)context
@@ -557,10 +589,28 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
         }
 
         const CGFloat *mcolor;
-        
         mcolor = CGColorGetComponents(self.inputColor);
-        glColor4f(mcolor[0], mcolor[1], mcolor[2], mcolor[3]);
-        
+        if(mcolor)
+        {
+            const GLfloat fColor[4] = {(GLfloat)mcolor[0],
+            (GLfloat)mcolor[1],
+            (GLfloat)mcolor[2],
+            (GLfloat)mcolor[3]};
+            
+            
+            glActiveTexture(GL_TEXTURE1);
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, colorTextureID);
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, fColor);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glEnable(GL_TEXTURE_GEN_S);
+            glEnable(GL_TEXTURE_GEN_T);
+            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+
+        }
         switch (self.inputRenderingMode)
         {
             case 0:
@@ -596,10 +646,10 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 
                 if(sprite && [sprite lockTextureRepresentationWithColorSpace:[context colorSpace] forBounds:[sprite imageBounds]])
                 {
-                    glActiveTexture(GL_TEXTURE1);
+                    glActiveTexture(GL_TEXTURE2);
                     glEnable(GL_POINT_SPRITE);
                     
-                    [sprite bindTextureRepresentationToCGLContext:cgl_ctx textureUnit:GL_TEXTURE1 normalizeCoordinates:YES];
+                    [sprite bindTextureRepresentationToCGLContext:cgl_ctx textureUnit:GL_TEXTURE2 normalizeCoordinates:YES];
                     
                     if([sprite textureTarget] == GL_TEXTURE_2D)
                         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -629,9 +679,8 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
                     glDisable(GL_POINT_SPRITE);
                     glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_FALSE);
 
-                    [sprite unbindTextureRepresentationFromCGLContext:cgl_ctx textureUnit:GL_TEXTURE1];
+                    [sprite unbindTextureRepresentationFromCGLContext:cgl_ctx textureUnit:GL_TEXTURE2];
                     [sprite unlockTextureRepresentation];
-                    glActiveTexture(GL_TEXTURE0);
                 }
                 
             }
@@ -639,6 +688,14 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
         }
         
         
+//        unbind our color texture id
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_TEXTURE_GEN_S);
+        glDisable(GL_TEXTURE_GEN_T);
+
+        glActiveTexture(GL_TEXTURE0);
+
         
 //		if(self.inputSilhouette)
 //		{
@@ -722,10 +779,6 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 }
 
 - (void) disableExecution:(id<QCPlugInContext>)context
-{
-}
-
-- (void) stopExecution:(id<QCPlugInContext>)context
 {
 }
 
@@ -928,6 +981,7 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 
 - (void) createGLResourcesInContext:(CGLContextObj)cgl_ctx node:(aiNode*)node
 {
+    
     // create OpenGL buffers and populate them based on each meshes pertinant info.
     
     //for (unsigned int i = 0; i < v002Scene->mNumMeshes; ++i)
@@ -1432,7 +1486,7 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 //		else
 //		{
 //			// crude hack to get silhouette working
-			glDisableClientState(GL_COLOR_ARRAY);
+//			glDisableClientState(GL_COLOR_ARRAY);
 //		}
 		
 		glPushMatrix();
