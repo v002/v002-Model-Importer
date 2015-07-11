@@ -355,6 +355,29 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
 
+    if([self didValueForInputKeyChange:@"inputColor"])
+    {
+        // update our texture
+        const CGFloat *mcolor;
+        mcolor = CGColorGetComponents(self.inputColor);
+        if(mcolor)
+        {
+            const GLfloat fColor[4] = {(GLfloat)mcolor[0],
+                (GLfloat)mcolor[1],
+                (GLfloat)mcolor[2],
+                (GLfloat)mcolor[3]};
+            
+            glActiveTexture(GL_TEXTURE1);
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, colorTextureID);
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, fColor);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        }
+
+    }
+    
     if([self didValueForInputKeyChange:@"inputCullMode"])
     {
         cullMode = self.inputCullMode;   
@@ -588,29 +611,19 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
             [self updateGLResources:cgl_ctx];
         }
 
-        const CGFloat *mcolor;
-        mcolor = CGColorGetComponents(self.inputColor);
-        if(mcolor)
+        // bind our color
+        if(colorTextureID)
         {
-            const GLfloat fColor[4] = {(GLfloat)mcolor[0],
-            (GLfloat)mcolor[1],
-            (GLfloat)mcolor[2],
-            (GLfloat)mcolor[3]};
-            
-            
             glActiveTexture(GL_TEXTURE1);
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, colorTextureID);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, fColor);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
             glEnable(GL_TEXTURE_GEN_S);
             glEnable(GL_TEXTURE_GEN_T);
             glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
             glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-
+            glActiveTexture(GL_TEXTURE0);
         }
+
         switch (self.inputRenderingMode)
         {
             case 0:
@@ -689,13 +702,15 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
         
         
 //        unbind our color texture id
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glDisable(GL_TEXTURE_GEN_S);
-        glDisable(GL_TEXTURE_GEN_T);
-
-        glActiveTexture(GL_TEXTURE0);
-
+        if(colorTextureID)
+        {
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glDisable(GL_TEXTURE_GEN_S);
+            glDisable(GL_TEXTURE_GEN_T);
+            
+            glActiveTexture(GL_TEXTURE0);
+        }
         
 //		if(self.inputSilhouette)
 //		{
