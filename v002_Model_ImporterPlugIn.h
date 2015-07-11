@@ -55,10 +55,10 @@
 @property (assign) NSString* inputModelPath;
 //@property (assign) NSUInteger inputModelLoadingQuality;
 @property (assign) id<QCPlugInInputImageSource> inputImage;
-@property (assign) BOOL inputOverrideColor;
+//@property (assign) BOOL inputOverrideColor;
 @property (assign) CGColorRef inputColor;
 @property (assign) NSUInteger inputAnimation;
-@property (assign) BOOL inputWireframe;
+@property (assign) NSUInteger inputRenderingMode;
 @property (assign) NSUInteger inputUVGenMode;
 @property (assign) double inputTranslationX;
 @property (assign) double inputTranslationY;
@@ -79,6 +79,13 @@
 //@property (assign) double inputSilhouetteWidth;
 //@property (assign) double inputSilhouetteOffset;
 @property (assign) BOOL inputLoadTextures;
+
+@property (assign) id<QCPlugInInputImageSource> inputPointSpriteImage;
+@property (assign) BOOL inputAttenuatePoints;
+@property (assign) double inputPointSize;
+@property (assign) double inputConstantAttenuation;
+@property (assign) double inputLinearAttenuation;
+@property (assign) double inputQuadraticAttenuation;
 
 @end
 

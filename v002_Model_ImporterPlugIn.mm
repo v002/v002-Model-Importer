@@ -62,9 +62,9 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 @dynamic inputModelPath;
 @dynamic inputImage;
 @dynamic inputColor;
-@dynamic inputOverrideColor;
+//@dynamic inputOverrideColor;
 @dynamic inputAnimation;
-@dynamic inputWireframe;
+@dynamic inputRenderingMode;
 @dynamic inputUVGenMode;
 @dynamic inputTranslationX;
 @dynamic inputTranslationY;
@@ -85,6 +85,13 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 //@dynamic inputSilhouetteOffset;
 //@dynamic inputSilhouetteColor;
 @dynamic inputLoadTextures;
+
+@dynamic inputPointSpriteImage;
+@dynamic inputPointSize;
+@dynamic inputAttenuatePoints;
+@dynamic inputConstantAttenuation;
+@dynamic inputLinearAttenuation;
+@dynamic inputQuadraticAttenuation;
 
 + (NSDictionary*) attributes
 {	
@@ -110,9 +117,9 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 
 	if([key isEqualToString:@"inputColor"])
 		return [NSDictionary dictionaryWithObjectsAndKeys:@"Tint Color", QCPortAttributeNameKey, nil];
-
-	if([key isEqualToString:@"inputOverrideColor"])
-		return [NSDictionary dictionaryWithObjectsAndKeys:@"Use Tint Color", QCPortAttributeNameKey, [NSNumber numberWithBool:FALSE], QCPortAttributeDefaultValueKey, nil];
+//
+//	if([key isEqualToString:@"inputOverrideColor"])
+//		return [NSDictionary dictionaryWithObjectsAndKeys:@"Use Tint Color", QCPortAttributeNameKey, [NSNumber numberWithBool:FALSE], QCPortAttributeDefaultValueKey, nil];
 
 	
     if([key isEqualToString:@"inputAnimation"])
@@ -120,8 +127,13 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
                 [NSNumber numberWithUnsignedInt:0], QCPortAttributeDefaultValueKey,
                 [NSNumber numberWithUnsignedInt:0], QCPortAttributeMinimumValueKey, nil];
     
-    if([key isEqualToString:@"inputWireframe"])
-		return [NSDictionary dictionaryWithObjectsAndKeys:@"Wireframe", QCPortAttributeNameKey, nil];
+    if([key isEqualToString:@"inputRenderingMode"])
+        return @{QCPortAttributeNameKey: @"Rendering Mode" ,
+                 QCPortAttributeMenuItemsKey : @[@"Model", @"Wireframe", @"Point"],
+                 QCPortAttributeDefaultValueKey : [NSNumber numberWithUnsignedInt:0],
+                 QCPortAttributeMinimumValueKey : [NSNumber numberWithUnsignedInt:0],
+                 QCPortAttributeMaximumValueKey : [NSNumber numberWithUnsignedInt:2],
+                 };
     
     if([key isEqualToString:@"inputUVGenMode"])
 		return [NSDictionary dictionaryWithObjectsAndKeys:@"Texture Coordinates", QCPortAttributeNameKey,
@@ -186,11 +198,32 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
     if([key isEqualToString:@"inputAutoCenter"])
 		return [NSDictionary dictionaryWithObjectsAndKeys:@"Auto Center", QCPortAttributeNameKey, [NSNumber numberWithBool:YES],QCPortAttributeDefaultValueKey, nil];
     
-	
     if([key isEqualToString:@"inputLoadTextures"])
 		return [NSDictionary dictionaryWithObjectsAndKeys:@"Load Textures", QCPortAttributeNameKey, [NSNumber numberWithBool:YES],QCPortAttributeDefaultValueKey, nil];
-	
     
+    if([key isEqualToString:@"inputPointSpriteImage"])
+        return [NSDictionary dictionaryWithObject:@"Point Sprite Image" forKey:QCPortAttributeNameKey];
+
+    if([key isEqualToString:@"inputPointSize"])
+        return @{QCPortAttributeNameKey : @"Point Size",
+                 QCPortAttributeDefaultValueKey : @1.0,
+                 QCPortAttributeMinimumValueKey : @0.1,
+                 QCPortAttributeMaximumValueKey : @64.0
+                 };
+
+    if([key isEqualToString:@"inputAttenuatePoints"])
+        return [NSDictionary dictionaryWithObjectsAndKeys:@"Point Attenuation",QCPortAttributeNameKey, nil];
+    
+    if([key isEqualToString:@"inputConstantAttenuation"])
+        return [NSDictionary dictionaryWithObjectsAndKeys:@"Point Constant Attenuation", QCPortAttributeNameKey, [NSNumber numberWithDouble:1.0],QCPortAttributeDefaultValueKey, nil];
+    
+    if([key isEqualToString:@"inputLinearAttenuation"])
+        return [NSDictionary dictionaryWithObjectsAndKeys:@"Point Linear Attenuation", QCPortAttributeNameKey, [NSNumber numberWithDouble:0.0],QCPortAttributeDefaultValueKey, nil];
+    
+    if([key isEqualToString:@"inputQuadraticAttenuation"])
+        return [NSDictionary dictionaryWithObjectsAndKeys:@"Point Quadratic Attenuation", QCPortAttributeNameKey, [NSNumber numberWithDouble:0.0],QCPortAttributeDefaultValueKey, nil];
+    
+
 	return nil;
 }
 
@@ -200,7 +233,7 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
             /*@"inputModelLoadingQuality", */
             @"inputImage",
             @"inputAnimation",
-            @"inputWireframe",
+            @"inputRenderingMode",
             @"inputGenerateUVs",
             @"inputUVGenMode",
             @"inputRotationX",
@@ -216,8 +249,15 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
             @"inputDepthMode",
             @"inputCullMode",
             @"inputNormalizeScale",
-            @"inputAutoCenter", nil];
-}   
+            @"inputAutoCenter"
+            @"inputPointSpriteImage",
+            @"inputPointSize",
+            @"inputAttenuatePoints",
+            @"inputConstantAttenuation",
+            @"inputLinearAttenuation",
+            @"inputQuadraticAttenuation"
+            , nil];
+}
 
 + (QCPlugInExecutionMode) executionMode
 {
@@ -508,25 +548,97 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
             glEnable(GL_TEXTURE_2D);
         }
         
-        if(self.inputWireframe)
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        else
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
         if(v002Scene->HasAnimations())
         {
-            NSUInteger animation = MIN(self.inputAnimation, v002Scene->mNumAnimations - 1); 
+            NSUInteger animation = MIN(self.inputAnimation, v002Scene->mNumAnimations - 1);
             
             [self updateAnimation:animation atTime:time];
             [self updateGLResources:cgl_ctx];
         }
-		
-		const CGFloat *mcolor;
 
-		mcolor = CGColorGetComponents(self.inputColor);
-		
-		glColor4f(mcolor[0], mcolor[1], mcolor[2], mcolor[3]);
-		
+        const CGFloat *mcolor;
+        
+        mcolor = CGColorGetComponents(self.inputColor);
+        glColor4f(mcolor[0], mcolor[1], mcolor[2], mcolor[3]);
+        
+        switch (self.inputRenderingMode)
+        {
+            case 0:
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                [self drawMeshesInContext:cgl_ctx enableMaterials:YES];
+                break;
+            case 1:
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                [self drawMeshesInContext:cgl_ctx enableMaterials:YES];
+                break;
+
+            case 2:
+            {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+                glPointSize((GLfloat)self.inputPointSize);
+                id<QCPlugInInputImageSource> sprite = self.inputPointSpriteImage;
+
+                float coefficients[3];
+                
+                if(self.inputAttenuatePoints)
+                {
+                    coefficients[0] = self.inputConstantAttenuation;
+                    coefficients[1] = self.inputLinearAttenuation;
+                    coefficients[2] = self.inputQuadraticAttenuation;
+                }
+                else
+                {
+                    coefficients[0] = 1;
+                    coefficients[1] = 0;
+                    coefficients[2] = 0;
+                }
+                glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, coefficients);
+
+                if(sprite && [sprite lockTextureRepresentationWithColorSpace:[context colorSpace] forBounds:[sprite imageBounds]])
+                {
+                    glActiveTexture(GL_TEXTURE1);
+                    glEnable(GL_POINT_SPRITE);
+                    
+                    [sprite bindTextureRepresentationToCGLContext:cgl_ctx textureUnit:GL_TEXTURE1 normalizeCoordinates:YES];
+                    
+                    if([sprite textureTarget] == GL_TEXTURE_2D)
+                        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                    
+                    glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+                    
+//                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+//                    //Sample RGB, multiply by previous texunit result
+//                    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);   //Modulate RGB with RGB
+//                    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+//                    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE);
+//                    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+//                    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+//                    //Sample ALPHA, multiply by previous texunit result
+//                    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);  //Modulate ALPHA with ALPHA
+//                    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+//                    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_TEXTURE);
+//                    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+//                    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
+                }
+                // draw
+                [self drawMeshesInContext:cgl_ctx enableMaterials:YES];
+                
+                if(sprite)
+                {
+                    glDisable(GL_POINT_SPRITE);
+                    glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_FALSE);
+
+                    [sprite unbindTextureRepresentationFromCGLContext:cgl_ctx textureUnit:GL_TEXTURE1];
+                    [sprite unlockTextureRepresentation];
+                    glActiveTexture(GL_TEXTURE0);
+                }
+                
+            }
+                break;
+        }
+        
+        
         
 //		if(self.inputSilhouette)
 //		{
@@ -576,7 +688,6 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 //		}
 //				
 //		else
-			[self drawMeshesInContext:cgl_ctx enableMaterials:!self.inputOverrideColor];
         
         if(image)
         {
@@ -893,7 +1004,7 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
             glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * mesh->mNumVertices, NULL, GL_STATIC_DRAW);
 
         // populate vertices
-        Vertex* verts = (Vertex*)glMapBuffer(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
+        Vertex* verts = (Vertex*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 
         for (unsigned int x = 0; x < mesh->mNumVertices; ++x)
         {
@@ -920,7 +1031,7 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
             ++verts;
         }
 
-        glUnmapBufferARB(GL_ARRAY_BUFFER_ARB); //invalidates verts
+        glUnmapBuffer(GL_ARRAY_BUFFER); //invalidates verts
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         
         // set the mesh vertex buffer handle to our new vertex buffer.
@@ -948,7 +1059,7 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
         
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * mesh->mNumFaces * nidx, NULL, GL_STATIC_DRAW);
 
-        unsigned int* indices = (unsigned int*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY_ARB);
+        unsigned int* indices = (unsigned int*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
         
         // now fill the index buffer
         for (unsigned int x = 0; x < mesh->mNumFaces; ++x)
@@ -1204,7 +1315,7 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
             
             glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * mesh->mNumVertices, NULL, GL_STREAM_DRAW);
             
-            Vertex* verts = (Vertex*)glMapBuffer(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
+            Vertex* verts = (Vertex*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
             
             for (unsigned int x = 0; x < mesh->mNumVertices; ++x)
             {
@@ -1233,7 +1344,7 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
                 ++verts;
             }
             
-            glUnmapBufferARB(GL_ARRAY_BUFFER_ARB); //invalidates verts
+            glUnmapBuffer(GL_ARRAY_BUFFER); //invalidates verts
             glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
     }
@@ -1250,21 +1361,21 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 			float ac[4];
 			float emc[4];        
 			
-			glEnable(GL_COLOR_MATERIAL);
-			
-			// Material colors and properties
-			color4_to_float4(helper.diffuseColor, dc);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, dc);
-			
-			color4_to_float4(helper.specularColor, sc);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, sc);
-			
-			color4_to_float4(helper.ambientColor, ac);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ac);
-			
-			color4_to_float4(helper.emissiveColor, emc);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emc);
-			
+//			glEnable(GL_COLOR_MATERIAL);
+//			
+//			// Material colors and properties
+//			color4_to_float4(helper.diffuseColor, dc);
+//			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, dc);
+//			
+//			color4_to_float4(helper.specularColor, sc);
+//			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, sc);
+//			
+//			color4_to_float4(helper.ambientColor, ac);
+//			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ac);
+//			
+//			color4_to_float4(helper.emissiveColor, emc);
+//			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emc);
+
 			// Culling
 			switch (cullMode)
 			{
@@ -1316,13 +1427,13 @@ static void Color4f(CGLContextObj cgl_ctx, const aiColor4D *color)
 		// This binds the whole VAO, inheriting all the buffer and client state. Weeee
 		glBindVertexArrayAPPLE(helper.vao);        
 		
-		if(enableMat)
-			glEnableClientState(GL_COLOR_ARRAY);
-		else
-		{
-			// crude hack to get silhouette working
+//		if(enableMat)
+//			glEnableClientState(GL_COLOR_ARRAY);
+//		else
+//		{
+//			// crude hack to get silhouette working
 			glDisableClientState(GL_COLOR_ARRAY);
-		}
+//		}
 		
 		glPushMatrix();
 		
